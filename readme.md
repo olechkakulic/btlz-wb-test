@@ -1,54 +1,61 @@
-# Шаблон для выполнения тестового задания
+# WB Tariffs Box: сервис сбора и экспорта тарифов
 
 ## Описание
-Шаблон подготовлен для того, чтобы попробовать сократить трудоемкость выполнения тестового задания.
+Сервис ежечасно получает тарифы WB для коробов (`GET https://common-api.wildberries.ru/api/v1/tariffs/box?date=YYYY-MM-DD`),
+сохраняет дневной срез в PostgreSQL и регулярно экспортирует актуальные коэффициенты в Google Sheets (лист `stocks_coefs`) по списку `spreadsheet_id`.
 
-В шаблоне настоены контейнеры для `postgres` и приложения на `nodejs`.  
-Для взаимодействия с БД используется `knex.js`.  
-В контейнере `app` используется `build` для приложения на `ts`, но можно использовать и `js`.
-
-Шаблон не является обязательным!\
-Можно использовать как есть или изменять на свой вкус.
-
-Все настройки можно найти в файлах:
-- compose.yaml
-- dockerfile
-- package.json
-- tsconfig.json
-- src/config/env/env.ts
-- src/config/knex/knexfile.ts
-
-## Команды:
-
-Запуск базы данных:
+## Запуск одной командой
 ```bash
-docker compose up -d --build postgres
+docker compose up --build
 ```
+По умолчанию берутся значения:
+- БД: `POSTGRES_HOST=postgres`, `POSTGRES_PORT=5432`, `POSTGRES_DB=postgres`, `POSTGRES_USER=postgres`, `POSTGRES_PASSWORD=postgres`
+- Приложение: `APP_PORT=5000`
+- Интеграции (опционально): `WB_API_TOKEN`, `GS_CLIENT_EMAIL`, `GS_PRIVATE_KEY`
 
-Для выполнения миграций и сидов не из контейнера:
-```bash
-npm run knex:dev migrate latest
-```
+Без секретов контейнеры поднимаются и миграции/сиды выполняются. Чтобы сервис реально тянул тарифы и писал в таблицы — передайте секреты.
 
+### Полный запуск с секретами (без .env)
 ```bash
-npm run knex:dev seed run
-```
-Также можно использовать и остальные команды (`migrate make <name>`,`migrate up`, `migrate down` и т.д.)
-
-Для запуска приложения в режиме разработки:
-```bash
-npm run dev
-```
-
-Запуск проверки самого приложения:
-```bash
-docker compose up -d --build app
-```
-
-Для финальной проверки рекомендую:
-```bash
-docker compose down --rmi local --volumes
+WB_API_TOKEN=... \
+GS_CLIENT_EMAIL=... \
+GS_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n' \
 docker compose up --build
 ```
 
-PS: С наилучшими пожеланиями!
+## Настройка Google Sheets
+1) Создайте 1..N таблиц, в каждой добавьте лист `stocks_coefs`.
+2) Дайте доступ Editor сервис-аккаунту: `GS_CLIENT_EMAIL`.
+3) Добавьте `spreadsheet_id` в сид `src/postgres/seeds/spreadsheets.js` (или сделайте INSERT в таблицу `spreadsheets`).
+
+## Проверка
+- Логи приложения:
+```bash
+docker compose logs app | tail -n 200
+```
+Ожидаем строку: `Service started: scheduler initialized`.
+
+- Одноразовый прогон (не ждать час):
+```bash
+docker compose exec app node -e "(async()=>{const {runOnce}=await import('/app/dist/scheduler.js'); await runOnce({ wbToken: process.env.WB_API_TOKEN, sheetsAuth: { clientEmail: process.env.GS_CLIENT_EMAIL, privateKey: process.env.GS_PRIVATE_KEY }, sheetTitle: 'stocks_coefs' }); console.log('manual runOnce finished');})().catch(e=>{console.error(e); process.exit(1);});"
+```
+
+- БД:
+```bash
+docker exec postgres psql -U postgres -d postgres -c "SELECT day, COUNT(*) FROM tariffs_box_coeffs GROUP BY day ORDER BY day DESC LIMIT 1;"
+```
+
+## Структура данных
+- `tariffs_box_raw_daily(day, payload jsonb)` — сырые данные WB за день
+- `tariffs_box_coeffs(id, day, coefficient numeric, meta jsonb)` — плоская витрина коэффициентов
+
+## Конфигурация
+- Чувствительных данных в репозитории нет. Для примера используйте `example.env`.
+- Локальный `.env` не коммитить.
+
+## Разработка (опционально)
+- Локальный dev без Docker требует `tsx`:
+```bash
+npm i -D tsx
+npm run dev
+```
