@@ -44,7 +44,12 @@ APP_PORT=5001
 1) Создайте 1..N таблиц, в каждой добавьте лист `stocks_coefs`.
 2) Дайте доступ Editor сервис-аккаунту: `GS_CLIENT_EMAIL`.
 3) Добавьте `spreadsheet_id` в сид `src/postgres/seeds/spreadsheets.js` (или сделайте INSERT в таблицу `spreadsheets`).
-
+```
+## Запуск
+```bash
+docker compose up --build
+```
+В вашей таблицы должны появиться необходимые данные. 
 ## Проверка
 - Логи приложения:
 ```bash
