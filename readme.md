@@ -31,13 +31,13 @@ POSTGRES_PORT=5432
 POSTGRES_DB=postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-APP_PORT=5001
-
+APP_PORT=5000
+```
 ## Настройка Google Sheets
-1) Создайте 1..N таблиц, в каждой добавьте лист `stocks_coefs`.
+1) Создайте 1..N таблиц, в каждой добавьте лист с название `stocks_coefs`.
 2) Дайте доступ Editor сервис-аккаунту: `GS_CLIENT_EMAIL`.
 3) Добавьте `spreadsheet_id` в сид `src/postgres/seeds/spreadsheets.js` (или сделайте INSERT в таблицу `spreadsheets`).
-```
+
 ## Запуск
 ```bash
 docker compose up --build
