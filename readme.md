@@ -4,18 +4,11 @@
 Сервис ежечасно получает тарифы WB для коробов (`GET https://common-api.wildberries.ru/api/v1/tariffs/box?date=YYYY-MM-DD`),
 сохраняет дневной срез в PostgreSQL и регулярно экспортирует актуальные коэффициенты в Google Sheets (лист `stocks_coefs`) по списку `spreadsheet_id`.
 
-# WB Tariffs Box — сбор и экспорт тарифов WB (обновлённый README)
 
-## Описание
-Сервис ежечасно запрашивает тарифы Wildberries для коробов:
-`GET https://common-api.wildberries.ru/api/v1/tariffs/box?date=YYYY-MM-DD`,  
-сохраняет дневной срез в PostgreSQL и экспортирует актуальные коэффициенты в Google Sheets (лист `stocks_coefs`) по списку `spreadsheet_id`.
+# Старт
 
----
+Для запуска достаточно создать файл `.env` в корне репозитория и положить в него все секреты/настройки. `docker compose` автоматически подхватывает `.env`. Пример файла также лежит в example.env
 
-# Быстрый старт — теперь через `.env`
-
-Теперь для запуска достаточно создать файл `.env` в корне репозитория и положить в него все секреты/настройки. `docker compose` автоматически подхватывает `.env`.
 
 Создайте `.env`
 
