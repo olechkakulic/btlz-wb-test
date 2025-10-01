@@ -35,7 +35,7 @@ docker compose logs app | tail -n 200
 ```
 Ожидаем строку: `Service started: scheduler initialized`.
 
-- Одноразовый прогон (не ждать час):
+- Одноразовый прогон :
 ```bash
 docker compose exec app node -e "(async()=>{const {runOnce}=await import('/app/dist/scheduler.js'); await runOnce({ wbToken: process.env.WB_API_TOKEN, sheetsAuth: { clientEmail: process.env.GS_CLIENT_EMAIL, privateKey: process.env.GS_PRIVATE_KEY }, sheetTitle: 'stocks_coefs' }); console.log('manual runOnce finished');})().catch(e=>{console.error(e); process.exit(1);});"
 ```
@@ -43,19 +43,4 @@ docker compose exec app node -e "(async()=>{const {runOnce}=await import('/app/d
 - БД:
 ```bash
 docker exec postgres psql -U postgres -d postgres -c "SELECT day, COUNT(*) FROM tariffs_box_coeffs GROUP BY day ORDER BY day DESC LIMIT 1;"
-```
-
-## Структура данных
-- `tariffs_box_raw_daily(day, payload jsonb)` — сырые данные WB за день
-- `tariffs_box_coeffs(id, day, coefficient numeric, meta jsonb)` — плоская витрина коэффициентов
-
-## Конфигурация
-- Чувствительных данных в репозитории нет. Для примера используйте `example.env`.
-- Локальный `.env` не коммитить.
-
-## Разработка (опционально)
-- Локальный dev без Docker требует `tsx`:
-```bash
-npm i -D tsx
-npm run dev
 ```
